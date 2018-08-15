@@ -96,11 +96,17 @@ impl SecretKey {
 
     #[inline]
     /// Adds one secret key to another, modulo the curve order
-    pub fn add_assign<C>(&mut self, secp: &Secp256k1<C>, other: &SecretKey)
-                     -> Result<(), Error> {
+    pub fn add_assign<C>(
+        &mut self,
+        secp: &Secp256k1<C>,
+        other: &[u8],
+    ) -> Result<(), Error> {
+        if other.len() != 32 {
+            return Err(Error::InvalidTweak);
+        }
         unsafe {
             if ffi::secp256k1_ec_privkey_tweak_add(secp.ctx, self.as_mut_ptr(), other.as_ptr()) != 1 {
-                Err(InvalidSecretKey)
+                Err(Error::InvalidTweak)
             } else {
                 Ok(())
             }
@@ -109,11 +115,17 @@ impl SecretKey {
 
     #[inline]
     /// Multiplies one secret key by another, modulo the curve order
-    pub fn mul_assign<C>(&mut self, secp: &Secp256k1<C>, other: &SecretKey)
-                     -> Result<(), Error> {
+    pub fn mul_assign<C>(
+        &mut self,
+        secp: &Secp256k1<C>,
+        other: &[u8],
+    ) -> Result<(), Error> {
+        if other.len() != 32 {
+            return Err(Error::InvalidTweak);
+        }
         unsafe {
             if ffi::secp256k1_ec_privkey_tweak_mul(secp.ctx, self.as_mut_ptr(), other.as_ptr()) != 1 {
-                Err(InvalidSecretKey)
+                Err(Error::InvalidTweak)
             } else {
                 Ok(())
             }
@@ -229,28 +241,40 @@ impl PublicKey {
 
     #[inline]
     /// Adds the pk corresponding to `other` to the pk `self` in place
-    pub fn add_exp_assign<C: Verification>(&mut self, secp: &Secp256k1<C>, other: &SecretKey)
-                         -> Result<(), Error> {
+    pub fn add_exp_assign<C: Verification>(
+        &mut self,
+        secp: &Secp256k1<C>,
+        other: &[u8]
+    ) -> Result<(), Error> {
+        if other.len() != 32 {
+            return Err(Error::InvalidTweak);
+        }
         unsafe {
             if ffi::secp256k1_ec_pubkey_tweak_add(secp.ctx, &mut self.0 as *mut _,
                                                   other.as_ptr()) == 1 {
                 Ok(())
             } else {
-                Err(InvalidSecretKey)
+                Err(Error::InvalidTweak)
             }
         }
     }
 
     #[inline]
     /// Muliplies the pk `self` in place by the scalar `other`
-    pub fn mul_assign<C: Verification>(&mut self, secp: &Secp256k1<C>, other: &SecretKey)
-                         -> Result<(), Error> {
+    pub fn mul_assign<C: Verification>(
+        &mut self,
+        secp: &Secp256k1<C>,
+        other: &[u8],
+    ) -> Result<(), Error> {
+        if other.len() != 32 {
+            return Err(Error::InvalidTweak);
+        }
         unsafe {
             if ffi::secp256k1_ec_pubkey_tweak_mul(secp.ctx, &mut self.0 as *mut _,
                                                   other.as_ptr()) == 1 {
                 Ok(())
             } else {
-                Err(InvalidSecretKey)
+                Err(Error::InvalidTweak)
             }
         }
     }
@@ -472,13 +496,13 @@ mod test {
         let (mut sk2, mut pk2) = s.generate_keypair(&mut thread_rng());
 
         assert_eq!(PublicKey::from_secret_key(&s, &sk1), pk1);
-        assert!(sk1.add_assign(&s, &sk2).is_ok());
-        assert!(pk1.add_exp_assign(&s, &sk2).is_ok());
+        assert!(sk1.add_assign(&s, &sk2[..]).is_ok());
+        assert!(pk1.add_exp_assign(&s, &sk2[..]).is_ok());
         assert_eq!(PublicKey::from_secret_key(&s, &sk1), pk1);
 
         assert_eq!(PublicKey::from_secret_key(&s, &sk2), pk2);
-        assert!(sk2.add_assign(&s, &sk1).is_ok());
-        assert!(pk2.add_exp_assign(&s, &sk1).is_ok());
+        assert!(sk2.add_assign(&s, &sk1[..]).is_ok());
+        assert!(pk2.add_exp_assign(&s, &sk1[..]).is_ok());
         assert_eq!(PublicKey::from_secret_key(&s, &sk2), pk2);
     }
 
@@ -490,13 +514,13 @@ mod test {
         let (mut sk2, mut pk2) = s.generate_keypair(&mut thread_rng());
 
         assert_eq!(PublicKey::from_secret_key(&s, &sk1), pk1);
-        assert!(sk1.mul_assign(&s, &sk2).is_ok());
-        assert!(pk1.mul_assign(&s, &sk2).is_ok());
+        assert!(sk1.mul_assign(&s, &sk2[..]).is_ok());
+        assert!(pk1.mul_assign(&s, &sk2[..]).is_ok());
         assert_eq!(PublicKey::from_secret_key(&s, &sk1), pk1);
 
         assert_eq!(PublicKey::from_secret_key(&s, &sk2), pk2);
-        assert!(sk2.mul_assign(&s, &sk1).is_ok());
-        assert!(pk2.mul_assign(&s, &sk1).is_ok());
+        assert!(sk2.mul_assign(&s, &sk1[..]).is_ok());
+        assert!(pk2.mul_assign(&s, &sk1[..]).is_ok());
         assert_eq!(PublicKey::from_secret_key(&s, &sk2), pk2);
     }
 
