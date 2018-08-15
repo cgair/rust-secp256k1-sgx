@@ -2,6 +2,7 @@
 # [Unreleased]
 
 * Update `rand` to 0.4 and `gcc` 0.3 to `cc` 1.0. (`rand` 0.5 exists but has a lot of breaking changes and no longer compiles with 1.14.0.)
+* Disallow messages that are 0 or overflow the curve order; this should never happen (probability < 2^128) with a random hash, and 0 in particular is cryptographically dangerous.
 
 # 0.10.0 - 2018-07-25
 

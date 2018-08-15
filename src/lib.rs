@@ -337,6 +337,13 @@ impl Message {
     pub fn from_slice(data: &[u8]) -> Result<Message, Error> {
         match data.len() {
             constants::MESSAGE_SIZE => {
+                let secp = Secp256k1::without_caps();
+                unsafe {
+                    if ffi::secp256k1_ec_seckey_verify(secp.ctx, data.as_ptr()) == 0 {
+                        return Err(Error::InvalidMessage);
+                    }
+                }
+
                 let mut ret = [0; constants::MESSAGE_SIZE];
                 ret[..].copy_from_slice(data);
                 Ok(Message(ret))
@@ -754,17 +761,16 @@ mod tests {
         s.randomize(&mut thread_rng());
 
         // Wild keys: 1, CURVE_ORDER - 1
-        // Wild msgs: 0, 1, CURVE_ORDER - 1, CURVE_ORDER
+        // Wild msgs: 1, CURVE_ORDER - 1
         let mut wild_keys = [[0; 32]; 2];
-        let mut wild_msgs = [[0; 32]; 4];
+        let mut wild_msgs = [[0; 32]; 2];
 
         wild_keys[0][0] = 1;
-        wild_msgs[1][0] = 1;
+        wild_msgs[0][0] = 1;
 
         use constants;
         wild_keys[1][..].copy_from_slice(&constants::CURVE_ORDER[..]);
         wild_msgs[1][..].copy_from_slice(&constants::CURVE_ORDER[..]);
-        wild_msgs[2][..].copy_from_slice(&constants::CURVE_ORDER[..]);
 
         wild_keys[1][0] -= 1;
         wild_msgs[1][0] -= 1;
@@ -844,7 +850,11 @@ mod tests {
                    Err(InvalidMessage));
         assert_eq!(Message::from_slice(&[0; constants::MESSAGE_SIZE + 1]),
                    Err(InvalidMessage));
-        assert!(Message::from_slice(&[0; constants::MESSAGE_SIZE]).is_ok());
+        assert_eq!(
+            Message::from_slice(&[0; constants::MESSAGE_SIZE]),
+            Err(InvalidMessage)
+        );
+        assert!(Message::from_slice(&[1; constants::MESSAGE_SIZE]).is_ok());
     }
 
     #[test]
