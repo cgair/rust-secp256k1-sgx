@@ -1,3 +1,6 @@
+# (Unreleased)
+
+* Remove `ops::Index` implementations for `Signature`
 
 # 0.11.1 - 2018-08-22
 
