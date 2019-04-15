@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-extern int u_stdout_ocall(size_t* retval, const void* buf, size_t nbytes);
+//extern int u_stdout_ocall(size_t* retval, const void* buf, size_t nbytes);
 
 static inline int printf_sgx(const char *fmt, ...) {
   va_list ap;
@@ -19,7 +19,7 @@ static inline int printf_sgx(const char *fmt, ...) {
   va_end(ap);
   
   size_t ret;
-  u_stdout_ocall(&ret, buf, strnlen(buf, BUFSIZ));
+  //u_stdout_ocall(&ret, buf, strnlen(buf, BUFSIZ));
   return 0;
 }
 
