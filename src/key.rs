@@ -191,6 +191,7 @@ impl PublicKey {
     #[inline]
     pub fn from_slice<C>(secp: &Secp256k1<C>, data: &[u8])
                       -> Result<PublicKey, Error> {
+        if data.is_empty() {return Err(InvalidPublicKey);}
 
         let mut pk = unsafe { ffi::PublicKey::blank() };
         unsafe {
