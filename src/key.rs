@@ -112,6 +112,12 @@ impl SecretKey {
             _ => Err(InvalidSecretKey)
         }
     }
+    
+    /// Gets a reference to the underlying array
+    #[inline]
+    pub fn as_ref(&self) -> &[u8; constants::SECRET_KEY_SIZE] {
+        &self.0
+    }
 
     #[inline]
     /// Adds one secret key to another, modulo the curve order
